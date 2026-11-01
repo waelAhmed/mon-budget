@@ -83,6 +83,47 @@ ul.list li:first-child{border-top:0}
 .bar .fill.sv{background:var(--save)}
 .bar .v{font:13px var(--num);width:84px;text-align:right;font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);font-size:14px;margin:0}
+.env{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--line)}
+.env:first-child{border-top:0}
+.env-top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.env-top b{font:600 14px var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.env-sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.env .track{display:block;height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.env .fill{display:block;height:100%;background:var(--accent)}
+.env.low .fill{background:#C98A1B} .env.over .fill{background:var(--warn)} .env.over .env-top b{color:var(--warn)}
+.arep{display:flex;justify-content:space-between;align-items:baseline;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.arep b{font:600 17px var(--num)}
+.arep.neg b{color:var(--warn)}
+.envhint{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.envhint.over{color:var(--warn)}
+.envedit{display:flex;flex-direction:column;gap:8px}
+.banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--chip);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;font-size:14px}
+.banner .btn{width:auto;padding:8px 12px;font-size:14px;flex:none}
+.goal{display:flex;flex-direction:column;gap:6px}
+.goal .track{display:block;height:10px;background:var(--chip);border-radius:5px;overflow:hidden}
+.goal .fill{display:block;height:100%;background:var(--save)}
+.goal-row{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+.goal-row b{font:600 15px var(--num)}
+.an{display:flex;flex-direction:column;gap:12px}
+.an-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.an-verdict{border-radius:10px;padding:12px;font-size:14px;line-height:1.4;background:var(--chip)}
+.an-verdict.ok{border-left:4px solid var(--ok)} .an-verdict.ko{border-left:4px solid var(--warn)}
+.an-warn{font-size:13px;color:var(--warn);margin:0}
+.leak{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.leak-h{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:15px}
+.leak-h b{font:600 14px var(--num);color:var(--ok);white-space:nowrap}
+.leak p{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.leak .tip{color:var(--fg)}
+.an-total{display:flex;justify-content:space-between;align-items:baseline;border:1px solid var(--accent);border-radius:10px;padding:12px;gap:8px}
+.an-total b{font:600 18px var(--num);color:var(--accent);text-align:right}
+table.bud{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.bud td{padding:5px 0;border-top:1px solid var(--line)} table.bud td+td{text-align:right;font-family:var(--num)}
+.editing{outline:2px solid var(--save);outline-offset:2px}
+.edit-bar{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--save)}
+.linkbtn{border:0;background:none;color:var(--accent);font:600 14px var(--font);cursor:pointer;padding:4px}
+.envedit .er{display:flex;align-items:center;gap:8px}
+.envedit .er span{flex:1;font-size:14px}
+.envedit .er input{width:120px;flex:none;text-align:right;font-family:var(--num)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw}
 .confirm{border:1px solid var(--warn);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .legend{font-size:12px;color:var(--muted);display:flex;gap:14px;align-items:center}
@@ -98,8 +139,10 @@ h2{font-size:15px;margin:0}
     <h1>Mon Budget</h1>
     <span class="month" id="monthLabel"></span>
   </header>
+  <div class="banner" id="exportBanner" hidden><span id="exportBannerText"></span><button class="btn" type="button" id="bannerExport">Exporter</button></div>
 
   <form class="card" id="form" autocomplete="off">
+    <div class="edit-bar" id="editBar" hidden><span>Modification d'une opération</span><button class="linkbtn" type="button" id="cancelEdit">Annuler</button></div>
     <div class="seg" id="typeSeg" role="group" aria-label="Type d'opération">
       <button type="button" data-t="Dépense">Dépense</button>
       <button type="button" data-t="Revenu">Revenu</button>
@@ -116,6 +159,7 @@ h2{font-size:15px;margin:0}
 
     <span class="lbl" id="catLabel">Catégorie</span>
     <div class="chips" id="chips" role="group" aria-labelledby="catLabel"></div>
+    <p class="envhint" id="envHint" hidden></p>
 
     <label class="lbl" for="desc">Description</label>
     <input class="f" id="desc" placeholder="ex. Légumes au marché" list="descHints">
@@ -141,6 +185,31 @@ h2{font-size:15px;margin:0}
       <div class="stat reste"><small>Reste (revenus − dépenses − épargne)</small><b id="sReste">0,000</b></div>
     </div>
     <p class="empty" style="font-size:12px">Calculé sur les opérations encore présentes sur l'iPhone. L'historique complet et les soldes d'épargne sont dans l'appli de l'ordinateur.</p>
+  </section>
+
+  <section class="card" id="goalCard">
+    <div class="head2"><h2>Objectif d'épargne</h2><button class="linkbtn" type="button" id="goalEditBtn">Modifier</button></div>
+    <div class="goal">
+      <div class="goal-row"><span>Objectif annuel</span><b id="gObj">5 000,000</b></div>
+      <div class="goal-row"><span>Soit par mois</span><b id="gObjM">416,667</b></div>
+      <div class="row" id="goalEdit" hidden><input class="f" id="goalInput" inputmode="decimal" aria-label="Objectif annuel en DT"><button class="btn" type="button" id="goalSave" style="width:auto">OK</button></div>
+      <div class="goal-row"><span>Épargné ce mois (iPhone)</span><b id="gMonth">0,000</b></div>
+      <span class="track"><span class="fill" id="gFill" style="width:0%"></span></span>
+    </div>
+    <button class="btn" type="button" id="btnAnalyse">Analyser les fuites de mes dépenses</button>
+    <div class="an" id="analyse" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="head2"><h2>Enveloppes du mois</h2><button class="btn ghost" id="btnEnvEdit" type="button" style="width:auto;padding:8px 12px;font-size:14px">Régler</button></div>
+    <div class="arep" id="arep"><span>À répartir<br><small class="env-sub">revenus − enveloppes − épargne</small></span><b id="sArep">0,000</b></div>
+    <div id="envList"></div>
+    <div class="envedit" id="envEdit" hidden>
+      <p class="empty" style="font-size:13px">Budget mensuel de chaque enveloppe (DT). Laisse vide ou 0 pour ne pas utiliser l'enveloppe.</p>
+      <div id="envInputs" class="envedit"></div>
+      <div class="row"><button class="btn" id="envSave" type="button">Enregistrer</button><button class="btn ghost" id="envCancel" type="button">Annuler</button></div>
+    </div>
+    <p class="empty" style="font-size:12px">Le report des restes d'un mois à l'autre est calculé dans l'appli de l'ordinateur. Vide l'iPhone seulement après la fin du mois pour garder des enveloppes justes.</p>
   </section>
 
   <section class="card">
@@ -181,6 +250,48 @@ const KEY = "depenses.v1";
 const $ = id => document.getElementById(id);
 let items = load().map(x=>({type:"Dépense", ...x}));   // anciennes saisies = dépenses
 let type = "Dépense", sens = "+", cat = CATS[type][0];
+const EKEY = "enveloppes.v1";
+let envs = (()=>{ try{ return JSON.parse(localStorage.getItem(EKEY)) || {}; }catch(e){ return {}; } })();
+function saveEnvs(){ try{ localStorage.setItem(EKEY, JSON.stringify(envs)); }catch(e){} }
+function spentMonth(c){ const m=todayISO().slice(0,7); return items.filter(x=>x.type==="Dépense"&&x.categorie===c&&x.date.slice(0,7)===m).reduce((s,x)=>s+x.montant,0); }
+function envHint(){
+  const h=$("envHint"); const e=envs[cat];
+  if(type!=="Dépense" || !e || !(e.budget>0)){ h.hidden=true; return; }
+  const r=e.budget-spentMonth(cat); h.hidden=false; h.className="envhint"+(r<0?" over":"");
+  h.textContent = r>=0 ? `Enveloppe ${cat} : reste ${fmt(r)} DT sur ${fmt(e.budget)}` : `Enveloppe ${cat} dépassée de ${fmt(-r)} DT`;
+}
+function renderEnvs(rev, epa){
+  const list=$("envList"); list.innerHTML="";
+  const cats=CATS["Dépense"].filter(c=>envs[c]&&envs[c].budget>0);
+  const extra=[...new Set(items.filter(x=>x.type==="Dépense"&&x.date.slice(0,7)===todayISO().slice(0,7)).map(x=>x.categorie))].filter(c=>!cats.includes(c));
+  let tb=0;
+  if(!cats.length){ list.innerHTML='<p class="empty">Aucune enveloppe. Touche « Régler » pour donner un budget mensuel à tes catégories (ex. Alimentation, Transport).</p>'; }
+  cats.concat(extra).forEach(c=>{
+    const b=(envs[c]&&envs[c].budget)||0, sp=spentMonth(c), r=b-sp; tb+=b;
+    const pct=b>0?Math.min(100,sp/b*100):100;
+    const d=document.createElement("div"); d.className="env"+(r<0?" over":(pct>=80?" low":""));
+    d.innerHTML=`<div class="env-top"><span></span><b>${r<0?"−"+fmt(-r):fmt(r)}</b></div><span class="track"><span class="fill" style="width:${pct.toFixed(1)}%"></span></span><span class="env-sub">${b>0?`${fmt(sp)} dépensé sur ${fmt(b)}`:`${fmt(sp)} dépensé, sans enveloppe`}</span>`;
+    d.querySelector(".env-top span").textContent=c; list.appendChild(d);
+  });
+  const a=rev-tb-epa; $("sArep").textContent=fmt(a); $("arep").className="arep"+(a<0?" neg":"");
+}
+function openEnvEdit(){
+  $("envInputs").innerHTML="";
+  CATS["Dépense"].forEach((c,i)=>{ const r=document.createElement("div"); r.className="er";
+    r.innerHTML=`<span></span><input class="f" inputmode="decimal" id="env_${i}" placeholder="0">`;
+    r.querySelector("span").textContent=c; const b=envs[c]&&envs[c].budget; if(b) r.querySelector("input").value=fmt(b).replace(/\s/g,"");
+    $("envInputs").appendChild(r); });
+  $("envEdit").hidden=false; $("envList").hidden=true;
+}
+$("btnEnvEdit").onclick=openEnvEdit;
+$("envCancel").onclick=()=>{ $("envEdit").hidden=true; $("envList").hidden=false; };
+$("envSave").onclick=()=>{
+  const t=nowISO();
+  CATS["Dépense"].forEach((c,i)=>{ const v=$("env_"+i).value.trim(); const n=v?parseAmt(v):0;
+    const b=isFinite(n)&&n>0?n:0; const old=envs[c]?envs[c].budget:0;
+    if(b!==old){ envs[c]={budget:b, modifie_le:t, exporte:false}; } });
+  saveEnvs(); $("envEdit").hidden=true; $("envList").hidden=false; render(); envHint(); toast("Enveloppes enregistrées");
+};
 
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ return []; } }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(items)); }catch(e){ toast("Impossible d'enregistrer sur cet appareil"); } }
@@ -221,6 +332,7 @@ function renderChips(){
   $("chips").innerHTML="";
   CATS[type].forEach(c=>{ const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=c;
     b.setAttribute("aria-pressed", c===cat); b.onclick=()=>{cat=c; renderChips();}; $("chips").appendChild(b); });
+  envHint();
 }
 
 function bars(el, entries, cls){
@@ -239,6 +351,7 @@ function render(){
   const rev=sum(mItems,"Revenu"), dep=sum(mItems,"Dépense"), epa=sum(mItems,"Épargne");
   $("sRev").textContent=fmt(rev); $("sDep").textContent=fmt(dep); $("sEpa").textContent=fmt(epa);
   $("sReste").textContent=fmt(rev-dep-epa); $("sCount").textContent=mItems.length;
+  renderEnvs(rev, epa); renderGoal(); renderBanner();
   $("sToday").textContent=`Dépensé aujourd'hui : ${fmt(sum(items.filter(x=>x.date===today),"Dépense"))} DT`;
 
   const sorted=[...items].sort((a,b)=> (b.date+b.saisi_le).localeCompare(a.date+a.saisi_le)).slice(0,25);
@@ -250,6 +363,7 @@ function render(){
       <div class="li-main"><div></div><small></small></div><span class="li-amt"></span>
       <button class="del" type="button" aria-label="Supprimer">×</button>`;
     li.querySelector(".li-main div").textContent = x.description || x.categorie;
+    li.querySelector(".li-main").onclick=()=>startEdit(x.id); li.querySelector(".li-main").style.cursor="pointer";
     li.querySelector(".li-main small").textContent = `${d} · ${x.type} · ${x.categorie}`;
     const amt=li.querySelector(".li-amt"); amt.textContent=signed(x); amt.classList.add(x.type);
     const del=li.querySelector(".del");
@@ -274,16 +388,161 @@ function render(){
   $("descHints").innerHTML = hints.map(h=>`<option value="${h.replace(/"/g,"&quot;")}">`).join("");
 }
 
+// ---------- Modification d'une opération
+let editingId=null;
+function startEdit(id){
+  const x=items.find(i=>i.id===id); if(!x) return;
+  editingId=id; setType(x.type);
+  if(x.type==="Épargne"){ sens=x.montant<0?"-":"+"; renderSens(); }
+  cat=x.categorie; renderChips();
+  $("amount").value=fmt(Math.abs(x.montant)).replace(/\s/g,""); $("desc").value=x.description||""; $("note").value=x.note||"";
+  $("date").value=x.date; $("pay").value=x.paiement||"Espèces";
+  $("editBar").hidden=false; $("submitBtn").textContent="Enregistrer la modification"; $("form").classList.add("editing");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function stopEdit(){ const was=editingId; editingId=null; $("editBar").hidden=true; $("form").classList.remove("editing"); if(was) setType(type); }
+$("cancelEdit").onclick=()=>{ stopEdit(); $("amount").value=""; $("desc").value=""; $("note").value=""; $("date").value=todayISO(); };
+
+// ---------- Objectif d'épargne
+const GKEY="objectif.v1";
+let objectif=(()=>{ try{ return JSON.parse(localStorage.getItem(GKEY))||{annuel:5000, seuil:10}; }catch(e){ return {annuel:5000, seuil:10}; } })();
+function saveGoal(){ try{ localStorage.setItem(GKEY, JSON.stringify(objectif)); }catch(e){} }
+function renderGoal(){
+  const m=todayISO().slice(0,7), om=objectif.annuel/12;
+  const ep=items.filter(x=>x.type==="Épargne"&&x.date.slice(0,7)===m).reduce((s,x)=>s+x.montant,0);
+  $("gObj").textContent=fmt(objectif.annuel); $("gObjM").textContent=fmt(om); $("gMonth").textContent=`${fmt(ep)} / ${fmt(om)}`;
+  $("gFill").style.width=Math.max(0,Math.min(100,ep/om*100)).toFixed(1)+"%";
+}
+$("goalEditBtn").onclick=()=>{ $("goalEdit").hidden=!$("goalEdit").hidden; $("goalInput").value=String(objectif.annuel).replace(".",","); };
+$("goalSave").onclick=()=>{ const v=parseAmt($("goalInput").value); if(!(v>0)){ toast("Indique un objectif en DT, ex. 5000"); return; }
+  objectif.annuel=v; saveGoal(); $("goalEdit").hidden=true; renderGoal(); if(!$("analyse").hidden) runAnalyse(); toast("Objectif enregistré"); };
+
+// ---------- Analyse des fuites (même logique que l'appli de l'ordinateur)
+const ESSENTIELLES=new Set(["Logement"]);
+const DISCRET=["Loisirs","Habillement","Famille / Cadeaux","Divers"];
+const NECESS=new Set(["Alimentation","Santé","Enfant / École","Transport","Factures"]);
+const plafond=c=>NECESS.has(c)?0.15:0.5;
+const dkey=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[0-9]/g,"").replace(/\s+/g," ").trim();
+function moisFenetre(nb){
+  const d=new Date(); let y=d.getFullYear(), mo=d.getMonth()+1;
+  const cur=`${y}-${String(mo).padStart(2,"0")}`;
+  if(d.getDate()<15 && items.some(x=>x.date.slice(0,7)<cur)){ mo--; if(!mo){mo=12;y--;} }
+  const out=[]; for(let i=0;i<nb;i++){ out.push(`${y}-${String(mo).padStart(2,"0")}`); mo--; if(!mo){mo=12;y--;} }
+  return out.sort();
+}
+function analyser(rows, budgetOf, objAnnuel, seuil){
+  const dep=rows.filter(r=>r.type==="Dépense");
+  const mois=[...new Set(rows.map(r=>r.date.slice(0,7)))].sort();
+  const moisDep=[...new Set(dep.map(r=>r.date.slice(0,7)))].sort();
+  const n=Math.max(1,moisDep.length);
+  const S=(a)=>a.reduce((s,r)=>s+r.montant,0);
+  const rev=S(rows.filter(r=>r.type==="Revenu"))/n, depm=S(dep)/n, epa=S(rows.filter(r=>r.type==="Épargne"))/n;
+  const objM=objAnnuel/12, capacite= rev>0 ? rev-depm : epa, ecart=objM-capacite;
+  const catM={}; dep.forEach(r=>catM[r.categorie]=(catM[r.categorie]||0)+r.montant/n);
+  const fuites=[];
+  const add=(titre,detail,mensuel,pots,conseil)=>{ const p={}; Object.entries(pots).forEach(([c,v])=>{ if(v>0&&!ESSENTIELLES.has(c)) p[c]=v; });
+    fuites.push({titre,detail,mensuel,cats:p,potentiel:Object.values(p).reduce((a,b)=>a+b,0),conseil}); };
+  // 1. petites dépenses
+  const petites=dep.filter(r=>r.montant<=seuil && !ESSENTIELLES.has(r.categorie));
+  if(petites.length>=3){
+    const g={}; petites.forEach(r=>{ const k=dkey(r.description)||r.categorie.toLowerCase(); g[k]=g[k]||{lib:r.description||r.categorie,nb:0,total:0}; g[k].nb++; g[k].total+=r.montant; });
+    const top=Object.values(g).sort((a,b)=>b.total-a.total).slice(0,3); const pots={};
+    petites.forEach(r=>pots[r.categorie]=(pots[r.categorie]||0)+0.5*r.montant/n);
+    add(`Petites dépenses (≤ ${fmt(seuil)} DT)`, `${Math.round(petites.length/n)} achats par mois pour ${fmt(S(petites)/n)} DT/mois. Les plus fréquents : `+top.map(t=>`${t.lib} (${t.nb}×, ${fmt(t.total/n)}/mois)`).join(", "),
+      S(petites)/n, pots, "Fixe-toi un plafond « argent de poche » en espèces par semaine ; viser −50 % de ces achats.");
+  }
+  // 2. achats répétés
+  const rg={}; dep.forEach(r=>{ const k=dkey(r.description); if(k&&r.montant>seuil&&!ESSENTIELLES.has(r.categorie)){ rg[k]=rg[k]||{lib:r.description,cat:r.categorie,nb:0,total:0}; rg[k].nb++; rg[k].total+=r.montant; } });
+  const reps=Object.values(rg).filter(g=>g.nb>=Math.max(3,n*2)).sort((a,b)=>b.total-a.total);
+  if(reps.length){ const pots={}; reps.forEach(g=>pots[g.cat]=(pots[g.cat]||0)+(NECESS.has(g.cat)?0.1:0.3)*g.total/n);
+    add("Achats qui reviennent souvent", reps.slice(0,4).map(g=>`${g.lib} : ${(g.nb/n).toFixed(1).replace(".",",")}×/mois, ${fmt(g.total/n)} DT/mois`).join(" ; "),
+      reps.reduce((s,g)=>s+g.total,0)/n, pots, "Acheter en plus grande quantité, comparer les prix ou espacer (−10 % pour le nécessaire, −30 % pour le reste)."); }
+  // 3. enveloppes dépassées
+  const mc={}; dep.forEach(r=>{ const k=r.date.slice(0,7)+"|"+r.categorie; mc[k]=(mc[k]||0)+r.montant; });
+  const over={}; Object.entries(mc).forEach(([k,s])=>{ const c=k.split("|")[1]; const b=budgetOf(c); if(b&&s>b) over[c]=(over[c]||0)+(s-b)/n; });
+  if(Object.keys(over).length) add("Enveloppes dépassées", Object.entries(over).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`${c} : +${fmt(v)} DT/mois`).join(", "),
+    Object.values(over).reduce((a,b)=>a+b,0), over, "Quand une enveloppe est vide, on s'arrête ou on prend dans une autre.");
+  // 4. hausse
+  if(moisDep.length>=2){ const der=moisDep[moisDep.length-1], prec=moisDep.slice(0,-1); const h={};
+    new Set(dep.map(r=>r.categorie)).forEach(c=>{ const moy=prec.reduce((s,m)=>s+(mc[m+"|"+c]||0),0)/prec.length, act=mc[der+"|"+c]||0;
+      if(moy>0&&act>moy*1.25&&act-moy>=20) h[c]=[act-moy,moy,act]; });
+    if(Object.keys(h).length) add(`Catégories en hausse en ${der}`, Object.entries(h).map(([c,v])=>`${c} : ${fmt(v[2])} contre ${fmt(v[1])} en moyenne`).join(", "),
+      Object.values(h).reduce((s,v)=>s+v[0],0), Object.fromEntries(Object.entries(h).map(([c,v])=>[c,v[0]])), "Revenir au niveau habituel de ces catégories."); }
+  // 5. non essentielles
+  const disc=Object.fromEntries(DISCRET.filter(c=>catM[c]>0).map(c=>[c,catM[c]]));
+  if(Object.keys(disc).length) add("Dépenses non essentielles", Object.entries(disc).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`${c} : ${fmt(v)} DT/mois`).join(", "),
+    Object.values(disc).reduce((a,b)=>a+b,0), Object.fromEntries(Object.entries(disc).map(([c,v])=>[c,0.2*v])), "Réduire de 20 % : une sortie en moins, attendre 48 h avant un achat non prévu.");
+  // 6. factures
+  if(catM["Factures"]>0) add("Factures et abonnements", `${fmt(catM["Factures"])} DT/mois`, catM["Factures"], {"Factures":0.1*catM["Factures"]}, "Comparer les offres internet et téléphone, supprimer les options inutiles (−10 %).");
+  // 7. divers
+  const tot=Object.values(catM).reduce((a,b)=>a+b,0);
+  if(tot&&(catM["Divers"]||0)/tot>0.10) add("« Divers » trop important", `${Math.round(100*catM["Divers"]/tot)} % des dépenses sont en Divers (${fmt(catM["Divers"])} DT/mois).`, catM["Divers"], {}, "Choisir une vraie catégorie à chaque saisie : on ne peut réduire que ce qu'on voit.");
+  const parCat={}; fuites.forEach(f=>Object.entries(f.cats).forEach(([c,p])=>parCat[c]=(parCat[c]||0)+p));
+  Object.keys(parCat).forEach(c=>parCat[c]=Math.min(parCat[c], plafond(c)*(catM[c]||0)));
+  const potentiel=Object.values(parCat).reduce((a,b)=>a+b,0);
+  const budgets=Object.entries(catM).sort((a,b)=>b[1]-a[1]).map(([c,m])=>[c,m,Math.max(0,Math.round(m-(parCat[c]||0)))]);
+  let avert=null;
+  if(dep.length<15) avert="Analyse préliminaire : peu de dépenses saisies. Saisis toutes tes dépenses pendant au moins 3 à 4 semaines pour un résultat fiable.";
+  if(rev<=0) avert=(avert?avert+" ":"")+"Aucun revenu saisi : ajoute ton salaire (type Revenu) pour calculer ta capacité d'épargne.";
+  return {mois,n,nbDep:dep.length,rev,dep:depm,epa,capacite,objM,objAnnuel,ecart,fuites:fuites.sort((a,b)=>b.potentiel-a.potentiel),potentiel,budgets,avert};
+}
+let lastAnalyse=null;
+function runAnalyse(){
+  const mois=moisFenetre(3);
+  const rows=items.filter(x=>mois.includes(x.date.slice(0,7)));
+  const a=analyser(rows, c=>envs[c]&&envs[c].budget>0?envs[c].budget:0, objectif.annuel, objectif.seuil||10);
+  lastAnalyse=a; const el=$("analyse"); el.hidden=false; el.innerHTML="";
+  const h=(tag,cls,txt)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; };
+  el.appendChild(h("p","empty",`Période : ${a.mois.join(", ")||"—"} · ${a.nbDep} dépenses · moyenne sur ${a.n} mois (données présentes sur l'iPhone).`));
+  if(a.avert) el.appendChild(h("p","an-warn",a.avert));
+  const k=h("div","an-kpis");
+  [["Revenus / mois",a.rev],["Dépenses / mois",a.dep],["Épargne versée / mois",a.epa],["Capacité d'épargne",a.capacite]].forEach(([l,v])=>{ const d=h("div","stat"); d.appendChild(h("small",null,l)); d.appendChild(h("b",null,fmt(v))); k.appendChild(d); });
+  el.appendChild(k);
+  el.appendChild(h("div","an-verdict "+(a.ecart<=0?"ok":"ko"), a.ecart<=0
+    ? `Objectif atteignable : ${fmt(a.objM)} DT/mois. Il te reste ${fmt(-a.ecart)} DT/mois de marge. Programme un virement de ${fmt(a.objM)} DT vers l'épargne le jour du salaire.`
+    : `Il manque ${fmt(a.ecart)} DT/mois (${fmt(a.ecart*12)} DT/an) pour épargner ${fmt(a.objAnnuel)} DT par an.`));
+  if(!a.fuites.length) el.appendChild(h("p","empty","Aucune fuite détectée avec les données actuelles."));
+  a.fuites.forEach(f=>{ const d=h("div","leak"); const hd=h("div","leak-h"); hd.appendChild(h("span",null,f.titre)); if(f.potentiel) hd.appendChild(h("b",null,`−${fmt(f.potentiel)}/mois`));
+    d.appendChild(hd); d.appendChild(h("p",null,f.detail)); d.appendChild(h("p","tip","→ "+f.conseil)); el.appendChild(d); });
+  const t=h("div","an-total"); t.appendChild(h("span",null,"Économie possible (sans double comptage)")); t.appendChild(h("b",null,`${fmt(a.potentiel)}/mois\n${fmt(a.potentiel*12)}/an`)); t.querySelector("b").style.whiteSpace="pre-line"; el.appendChild(t);
+  if(a.ecart>0){ const pct=a.potentiel/a.ecart*100; el.appendChild(h("p","empty",`Ces pistes couvrent ${Math.min(100,Math.round(pct))} % de l'écart.`+(pct>=100?"":" Pour le reste : revenus en plus (prime, freelance) ou un objectif par étapes."))); }
+  if(a.budgets.length){
+    el.appendChild(h("h2",null,"Budgets proposés par enveloppe"));
+    const tb=h("table","bud"); a.budgets.forEach(([c,m,p])=>{ const tr=document.createElement("tr"); [c,`${fmt(m)} → ${fmt(p)}`].forEach(v=>tr.appendChild(h("td",null,v))); tb.appendChild(tr); });
+    el.appendChild(tb);
+    const ap=h("button","btn ghost","Appliquer ces budgets aux enveloppes"); ap.type="button";
+    ap.onclick=()=>{ const tm=nowISO(); a.budgets.forEach(([c,,p])=>{ envs[c]={budget:p, modifie_le:tm}; }); saveEnvs(); render(); toast("Budgets appliqués aux enveloppes"); };
+    el.appendChild(ap);
+  }
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("btnAnalyse").onclick=()=>{ runAnalyse(); };
+
+// ---------- Rappel d'export
+function renderBanner(){
+  const p=items.filter(x=>!x.exporte_le); if(!p.length){ $("exportBanner").hidden=true; return; }
+  const oldest=p.map(x=>x.saisi_le||x.date).sort()[0]; const days=Math.floor((Date.now()-new Date(oldest).getTime())/86400000);
+  if(days<7){ $("exportBanner").hidden=true; return; }
+  $("exportBanner").hidden=false; $("exportBannerText").textContent=`${p.length} opération(s) non sauvegardée(s) sur le PC depuis ${days} jours.`;
+}
+$("bannerExport").onclick=()=>exportXlsx(true);
+
 $("form").addEventListener("submit", e=>{
   e.preventDefault();
   let m=parseAmt($("amount").value);
   if(!(m>0)){ toast("Indique un montant, ex. 12,500"); $("amount").focus(); return; }
   if(type==="Épargne" && sens==="-") m=-m;
-  items.push({ id:uid(), type, date:$("date").value||todayISO(), montant:m, categorie:cat,
-    description:$("desc").value.trim(), paiement:$("pay").value, note:$("note").value.trim(), saisi_le:nowISO(), exporte_le:"" });
+  const fields={ type, date:$("date").value||todayISO(), montant:m, categorie:cat,
+    description:$("desc").value.trim(), paiement:$("pay").value, note:$("note").value.trim() };
+  let it;
+  if(editingId){ it=items.find(i=>i.id===editingId); Object.assign(it, fields, {exporte_le:"", modifie_le:nowISO()}); }
+  else { it={ id:uid(), ...fields, saisi_le:nowISO(), exporte_le:"" }; items.push(it); }
+  const wasEdit=!!editingId; stopEdit();
   save(); render();
   $("amount").value=""; $("desc").value=""; $("note").value="";
-  toast(`${signed(items[items.length-1])} DT · ${cat}`);
+  let msg=(wasEdit?"Modifiée : ":"")+`${signed(it)} DT · ${it.categorie}`;
+  if(type==="Dépense" && envs[cat] && envs[cat].budget>0){ const r=envs[cat].budget-spentMonth(cat); msg += r>=0?` · reste ${fmt(r)}`:` · enveloppe dépassée de ${fmt(-r)}`; }
+  envHint(); toast(msg);
 });
 
 async function exportXlsx(onlyNew){
@@ -295,6 +554,10 @@ async function exportXlsx(onlyNew){
   ws["!cols"]=[{wch:36},{wch:9},{wch:11},{wch:12},{wch:20},{wch:28},{wch:12},{wch:20},{wch:19}];
   for(let r=1;r<aoa.length;r++){ const c=ws[XLSX.utils.encode_cell({r,c:3})]; if(c) c.z="#,##0.000"; }
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Operations");
+  const ecats=Object.keys(envs).filter(c=>envs[c].modifie_le);
+  if(ecats.length){ const m=todayISO().slice(0,7);
+    const ea=[["Mois","Catégorie","Budget (DT)","Modifié le"]].concat(ecats.map(c=>[m,c,envs[c].budget,envs[c].modifie_le]));
+    const es=XLSX.utils.aoa_to_sheet(ea); es["!cols"]=[{wch:9},{wch:20},{wch:12},{wch:19}]; XLSX.utils.book_append_sheet(wb, es, "Enveloppes"); }
   const stamp=nowISO().replace(/[-:]/g,"").replace("T","_").slice(0,13);
   const name=`budget_iphone_${stamp}.xlsx`;
   const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
